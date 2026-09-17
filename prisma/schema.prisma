@@ -1,0 +1,50 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Survey {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  questions   Question[]
+  respondents Respondent[]
+}
+
+model Question {
+  id         String   @id @default(cuid())
+  surveyId   String
+  survey     Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  text       String
+  type       String
+  options    String?
+  isRequired Boolean  @default(true)
+  order      Int      @default(0)
+  answers    Answer[]
+}
+
+model Respondent {
+  id          String   @id @default(cuid())
+  surveyId    String
+  survey      Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  name        String   @default("Anonim")
+  info        String?
+  submittedAt DateTime @default(now())
+  answers     Answer[]
+}
+
+model Answer {
+  id           String     @id @default(cuid())
+  respondentId String
+  respondent   Respondent @relation(fields: [respondentId], references: [id], onDelete: Cascade)
+  questionId   String
+  question     Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  value        String
+}

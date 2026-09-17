@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  survey-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: survey-nextjs-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - ADMIN_PASSKEY=${ADMIN_PASSKEY}
+      - PORT=3000
+    env_file:
+      - .env
