@@ -47,3 +47,10 @@ Thumbs.db
 
 # TypeScript
 *.tsbuildinfo
+
+standalone.tar.gz
+ 
+deploy.ps1
+deploy.js
+*.tar.gz
+test.txt

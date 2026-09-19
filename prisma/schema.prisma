@@ -4,7 +4,8 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 model Survey {
@@ -35,6 +36,9 @@ model Respondent {
   surveyId    String
   survey      Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   name        String   @default("Anonim")
+  nim         String?
+  prodi       String?
+  semester    String?
   info        String?
   submittedAt DateTime @default(now())
   answers     Answer[]

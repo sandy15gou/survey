@@ -34,7 +34,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { surveyId, name, info, answers } = body;
+    const { surveyId, name, nim, prodi, semester, answers } = body;
 
     if (!surveyId || !answers || !Array.isArray(answers)) {
       return NextResponse.json({ 
@@ -61,7 +61,10 @@ export async function POST(req: Request) {
         data: {
           surveyId,
           name: name?.trim() || 'Anonim',
-          info: info?.trim() || null,
+          nim: nim?.trim() || null,
+          prodi: prodi?.trim() || null,
+          semester: semester ? String(semester).trim() : null,
+          info: prodi?.trim() || null,
         }
       });
 

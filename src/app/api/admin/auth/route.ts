@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { getExpectedPasskey, createAdminToken, PASSKEY_COOKIE_NAME, isAuthenticatedAdmin } from '@/lib/auth';
 
@@ -8,7 +9,8 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { passkey } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const passkey = (body?.passkey || '').toString().trim();
     const expected = getExpectedPasskey();
 
     if (!passkey || passkey !== expected) {
@@ -19,28 +21,30 @@ export async function POST(req: Request) {
     }
 
     const token = createAdminToken(passkey);
-    const response = NextResponse.json({ 
+    
+    const cookieStore = cookies();
+    cookieStore.set(PASSKEY_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return NextResponse.json({ 
       success: true, 
       message: 'Otentikasi berhasil' 
     });
-
-    // Pasang cookie HTTP-only
-    response.cookies.set(PASSKEY_COOKIE_NAME, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 7 hari
-    });
-
-    return response;
-  } catch (error) {
-    return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Auth API POST error:', error);
+    return NextResponse.json({ success: false, message: error?.message || 'Server error' }, { status: 500 });
   }
 }
 
 export async function DELETE() {
-  const response = NextResponse.json({ success: true, message: 'Berhasil logout' });
-  response.cookies.delete(PASSKEY_COOKIE_NAME);
-  return response;
+  try {
+    const cookieStore = cookies();
+    cookieStore.delete(PASSKEY_COOKIE_NAME);
+  } catch {}
+  return NextResponse.json({ success: true, message: 'Berhasil logout' });
 }

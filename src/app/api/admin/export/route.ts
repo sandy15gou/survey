@@ -23,25 +23,34 @@ export async function GET() {
     }
 
     // Susun Header CSV
-    const headers = ['No', 'Waktu Submit', 'Nama Responden', 'Info/Kelas'];
+    const headers = ['No', 'Waktu Submit', 'Nama Mahasiswa', 'NIM', 'Program Studi', 'Semester'];
     survey.questions.forEach((q, idx) => {
-      headers.push(`"Q${idx + 1}: ${q.text.replace(/"/g, '""')}"`);
+      const escapedText = q.text.split('"').join('""');
+      headers.push(`"Q${idx + 1}: ${escapedText}"`);
     });
 
     const rows: string[] = [headers.join(',')];
 
     // Susun Data Rows
     survey.respondents.forEach((resp, index) => {
+      const cleanName = (resp.name || 'Anonim').split('"').join('""');
+      const cleanNim = (resp.nim || '-').split('"').join('""');
+      const cleanProdi = (resp.prodi || resp.info || '-').split('"').join('""');
+      const cleanSemester = (resp.semester || '-').split('"').join('""');
+      const dateStr = new Date(resp.submittedAt).toLocaleString('id-ID');
+
       const row = [
         index + 1,
-        `"${new Date(resp.submittedAt).toLocaleString('id-ID')}"`,
-        `"${(resp.name || 'Anonim').replace(/"/g, '""')}"`,
-        `"${(resp.info || '-').replace(/"/g, '""')}"`
+        `"${dateStr}"`,
+        `"${cleanName}"`,
+        `"${cleanNim}"`,
+        `"${cleanProdi}"`,
+        `"${cleanSemester}"`
       ];
 
       survey.questions.forEach((q) => {
         const ans = resp.answers.find(a => a.questionId === q.id);
-        const val = ans ? ans.value.replace(/"/g, '""').replace(/\n/g, ' ') : '-';
+        const val = ans ? ans.value.split('"').join('""').replace(/\r?\n/g, ' ') : '-';
         row.push(`"${val}"`);
       });
 
@@ -50,10 +59,11 @@ export async function GET() {
 
     const csvData = '\uFEFF' + rows.join('\r\n'); // Dengan BOM UTF-8 agar Excel membaca karakter dengan benar
 
+    const dateTag = new Date().toISOString().slice(0, 10);
     return new Response(csvData, {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': `attachment; filename="survey-rekap-${new Date().toISOString().slice(0, 10)}.csv"`,
+        'Content-Disposition': `attachment; filename="survey-rekap-uin-${dateTag}.csv"`,
       },
     });
   } catch (error: any) {

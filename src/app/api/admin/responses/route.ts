@@ -82,3 +82,48 @@ export async function GET() {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }
+
+// DELETE: Hapus 1 responden ATAU hapus seluruh respon kuesioner (Reset)
+export async function DELETE(req: Request) {
+  if (!isAuthenticatedAdmin()) {
+    return NextResponse.json({ success: false, message: 'Akses Ditolak. Silakan masukkan passkey admin.' }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    const all = searchParams.get('all') === 'true';
+    const surveyId = searchParams.get('surveyId');
+
+    if (all) {
+      if (!surveyId) {
+        return NextResponse.json({ success: false, message: 'surveyId diperlukan untuk mereset seluruh respon.' }, { status: 400 });
+      }
+
+      await prisma.respondent.deleteMany({
+        where: { surveyId }
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'Seluruh data respon kuesioner berhasil dibersihkan (Reset selesai).'
+      });
+    }
+
+    if (!id) {
+      return NextResponse.json({ success: false, message: 'ID responden diperlukan.' }, { status: 400 });
+    }
+
+    await prisma.respondent.delete({
+      where: { id }
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Data responden berhasil dihapus.'
+    });
+  } catch (error: any) {
+    console.error('Failed to delete respondent:', error);
+    return NextResponse.json({ success: false, message: error.message || 'Gagal menghapus data respon.' }, { status: 500 });
+  }
+}
